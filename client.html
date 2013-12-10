@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <body>
+  <video width="320" height="240" controls>
+  </video>
+    <script>
+		window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+		if (!!!window.MediaSource) {
+		  alert('MediaSource API is not available');
+		}
+		var ms = new MediaSource();
+		var video = document.querySelector('video');
+		video.src = window.URL.createObjectURL(ms);
+		var sourceBuffer;
+		//var mediaSource;
+		//var video;
+		
+		ms.addEventListener('webkitsourceopen', function(e) {
+			sourceBuffer = ms.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
+			//sourceBuffer = ms.addSourceBuffer('video/mp4; codecs="aac,h264"');
+		});
+		
+      if ("WebSocket" in window) {
+        // Let us open a web socket
+        var ws = new WebSocket("ws://localhost:8080");
+		ws.binaryType = 'arraybuffer';				
+		
+		ws.onopen = function(){
+          // Web Socket is connected, send data using send()
+          //ws.send("Message to send");
+          //console.log("Message is sent...");
+        };
+        
+		ws.onmessage = function (evt) {
+			console.log(evt.data.byteLength);
+			console.log(new Uint8Array(evt.data));				
+			
+			//video.webkitSourceAppend(new Uint8Array(evt.data));
+			sourceBuffer.append(new Uint8Array(evt.data));
+			if (video.paused) {
+				video.play(); // Start playing after 1st chunk is appended.
+			}
+		};
+		
+		function onError(e) {
+			console.log("Error: "+e);
+		}
+		
+		ws.onclose = function(){ 
+          // websocket is closed.
+          console.log("Connection is closed..."); 
+        };
+      } else {
+        // The browser doesn't support WebSocket
+        console.log("WebSocket NOT supported by your Browser!");
+      }
+    </script>
+  </body>
+</html>
